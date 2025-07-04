@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 导入 ChatUI 样式 */
+@import '@chatui/core/dist/index.css';
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+/* 聊天容器样式 - 固定尺寸 */
+.chat-container {
+  position: relative;
+  width: 100%;
+  height: 600px; /* 固定高度 */
+  max-width: 800px; /* 固定最大宽度 */
+  margin: 0 auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+/* 确保 ChatUI 组件内部布局正确 */
+.chat-container .ChatUI {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container .ChatUI-messageList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chat-container .ChatUI-composer {
+  flex-shrink: 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .chat-container {
+    height: 500px; /* 移动端稍微降低高度 */
+    max-width: 95vw; /* 移动端使用视口宽度 */
+    margin: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-container {
+    height: 450px; /* 小屏幕进一步降低高度 */
+    border-radius: 8px; /* 减小圆角 */
+  }
+}
+
+/* 打字气泡容器样式 */
+.typing-bubble-container {
+  position: absolute;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* 打字气泡样式增强 */
+.typing-bubble-container .ChatUI-bubble {
+  background: #f0f0f0;
+  border-radius: 18px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 80%;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Markdown 内容样式 */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  margin: 16px 0 8px 0;
+  font-weight: bold;
+}
+
+.markdown-content h1 {
+  font-size: 1.5em;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 8px;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
+
+.markdown-content h3 {
+  font-size: 1.1em;
+}
+
+.markdown-content p {
+  margin: 8px 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.markdown-content li {
+  margin: 4px 0;
+}
+
+.markdown-content strong {
+  font-weight: bold;
+  color: #333;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: #666;
+}
+
+/* 打字气泡中的 Markdown 样式 */
+.typing-markdown {
+  line-height: 1.6;
+}
+
+.typing-markdown h1,
+.typing-markdown h2,
+.typing-markdown h3 {
+  margin: 12px 0 6px 0;
+  font-weight: bold;
+}
+
+.typing-markdown h1 {
+  font-size: 1.4em;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 6px;
+}
+
+.typing-markdown h2 {
+  font-size: 1.2em;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 3px;
+}
+
+.typing-markdown h3 {
+  font-size: 1.1em;
+}
+
+.typing-markdown p {
+  margin: 6px 0;
+}
+
+.typing-markdown ul,
+.typing-markdown ol {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.typing-markdown li {
+  margin: 3px 0;
+}
+
+.typing-markdown strong {
+  font-weight: bold;
+  color: #222;
+}
+
+.typing-markdown em {
+  font-style: italic;
+  color: #555;
+}

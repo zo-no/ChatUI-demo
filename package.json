@@ -10,14 +10,15 @@
   },
   "dependencies": {
     "@chatui/core": "^3.0.0",
+    "@types/lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "marked": "^15.0.12",
     "next": "14.0.0",
     "react": "^18",
-    "react-dom": "^18",
-    "react-markdown": "^10.1.0"
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^20.19.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10",

@@ -1,0 +1,52 @@
+/* 流式文本动画效果 */
+
+/* 内容块淡入动画 */
+.content-block {
+  opacity: 0;
+  animation: blockFadeIn 0.8s ease-out forwards;
+}
+
+@keyframes blockFadeIn {
+  to { 
+    opacity: 1; 
+  }
+}
+
+/* 字符浮动显现动画 - 增强版，更加明显的效果 */
+.char-fade-in {
+  display: inline-block;
+  animation: charFadeIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes charFadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.5) rotate(10deg); 
+    filter: blur(2px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(-5px) scale(1.1) rotate(-2deg);
+    filter: blur(0px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) rotate(0deg); 
+    filter: blur(0px);
+  }
+}
+
+/* 流式内容容器样式 */
+.streaming-content {
+  /* 可以添加特定的流式内容样式 */
+}
+
+/* 打字效果内容样式 */
+.typing-content {
+  /* 可以添加特定的打字效果样式 */
+}
+
+/* 普通文本内容样式 */
+.text-content {
+  /* 可以添加特定的文本样式 */
+} 

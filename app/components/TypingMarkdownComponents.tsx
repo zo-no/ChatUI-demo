@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import ReactMarkdown from 'react-markdown';
+import { marked } from 'marked';
 
 // 文本块接口
 interface TextBlock {
@@ -14,6 +14,38 @@ interface TextBlock {
 interface TypingTask {
   char: string;
   blockId: string;
+}
+
+// 移除markdown字符，返回纯文本用于流式显示
+function stripMarkdown(text: string): string {
+  return text
+    // 移除标题 (#, ##, ###)
+    .replace(/^#{1,6}\s+/gm, '')
+    // 移除粗体 (**text** 或 __text__)
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    // 移除斜体 (*text* 或 _text_)
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    // 移除代码块标记 (```代码```)
+    .replace(/```[\s\S]*?```/g, (match) => {
+      return match.replace(/```(\w*\n)?/g, '').replace(/```$/g, '');
+    })
+    // 移除行内代码 (`code`)
+    .replace(/`([^`]+)`/g, '$1')
+    // 移除引用 (> text)
+    .replace(/^>\s+/gm, '')
+    // 处理表格 - 移除表格分隔符，保留内容
+    .replace(/^\|(.+)\|$/gm, (match, content) => {
+      return content.split('|').map((cell: string) => cell.trim()).join(' | ');
+    })
+    // 移除表格对齐行 (|:---|---:|)
+    .replace(/^\|[\s:|-]+\|$/gm, '')
+    // 移除列表标记 (- item, 1. item)
+    .replace(/^[\s]*[-*+]\s+/gm, '• ')
+    .replace(/^[\s]*\d+\.\s+/gm, '• ')
+    // 清理多余的换行
+    .replace(/\n{3,}/g, '\n\n');
 }
 
 // 流式文本处理器 Hook - 模仿 1-1.html 中的 MarkdownStreamProcessor
@@ -51,8 +83,9 @@ export function useStreamProcessor(speed: number = 20) {
             isComplete: false
           }]);
 
-          // 将这个块的文本添加到打字队列
-          for (const char of blockContent) {
+          // 将这个块的纯文本（去除markdown字符）添加到打字队列
+          const plainText = stripMarkdown(blockContent);
+          for (const char of plainText) {
             setTextQueue(prevQueue => [...prevQueue, { char, blockId }]);
           }
         }
@@ -74,7 +107,9 @@ export function useStreamProcessor(speed: number = 20) {
           isComplete: false
         }]);
 
-        for (const char of prevBuffer) {
+        // 将纯文本添加到打字队列
+        const plainText = stripMarkdown(prevBuffer);
+        for (const char of plainText) {
           setTextQueue(prevQueue => [...prevQueue, { char, blockId }]);
         }
       }
@@ -97,10 +132,11 @@ export function useStreamProcessor(speed: number = 20) {
           setBlocks(prevBlocks => 
             prevBlocks.map(block => {
               if (block.id === task.blockId) {
-                const currentLength = block.content.length - remainingQueue.filter(t => t.blockId === task.blockId).length;
+                const plainText = stripMarkdown(block.content);
+                const currentLength = plainText.length - remainingQueue.filter(t => t.blockId === task.blockId).length;
                 return {
                   ...block,
-                  isComplete: currentLength >= block.content.length
+                  isComplete: currentLength >= plainText.length
                 };
               }
               return block;
@@ -161,124 +197,39 @@ export function useStreamProcessor(speed: number = 20) {
   };
 }
 
-// 单个文本块组件 - 支持markdown渲染和字符动画
+// 单个文本块组件 - 支持marked渲染和字符动画
 export function TextBlockComponent({ block, textQueue }: { 
   block: TextBlock;
   textQueue: TypingTask[];
 }) {
-  // 计算当前块应该显示的字符数
+  // 计算当前块应该显示的字符数（基于纯文本）
+  const plainText = stripMarkdown(block.content);
   const remainingCharsForThisBlock = textQueue.filter(task => task.blockId === block.id).length;
-  const displayLength = block.content.length - remainingCharsForThisBlock;
-  const isTypingComplete = displayLength >= block.content.length;
-
-  // 自定义markdown组件，用于完成后的渲染
-  const components = {
-    // 段落
-    p: ({ children }: any) => (
-      <p style={{ margin: '0.5em 0', lineHeight: '1.6' }}>
-        {children}
-      </p>
-    ),
-    // 标题
-    h1: ({ children }: any) => (
-      <h1 style={{ fontSize: '1.8em', fontWeight: 'bold', margin: '1em 0 0.5em 0', color: '#333' }}>
-        {children}
-      </h1>
-    ),
-    h2: ({ children }: any) => (
-      <h2 style={{ fontSize: '1.5em', fontWeight: 'bold', margin: '1em 0 0.5em 0', color: '#444' }}>
-        {children}
-      </h2>
-    ),
-    h3: ({ children }: any) => (
-      <h3 style={{ fontSize: '1.3em', fontWeight: 'bold', margin: '1em 0 0.5em 0', color: '#555' }}>
-        {children}
-      </h3>
-    ),
-    // 强调
-    strong: ({ children }: any) => (
-      <strong style={{ fontWeight: 'bold', color: '#2563eb' }}>
-        {children}
-      </strong>
-    ),
-    em: ({ children }: any) => (
-      <em style={{ fontStyle: 'italic', color: '#7c3aed' }}>
-        {children}
-      </em>
-    ),
-    // 列表
-    ul: ({ children }: any) => (
-      <ul style={{ paddingLeft: '1.5em', margin: '0.5em 0' }}>
-        {children}
-      </ul>
-    ),
-    ol: ({ children }: any) => (
-      <ol style={{ paddingLeft: '1.5em', margin: '0.5em 0' }}>
-        {children}
-      </ol>
-    ),
-    li: ({ children }: any) => (
-      <li style={{ margin: '0.25em 0' }}>
-        {children}
-      </li>
-    ),
-    // 代码
-    code: ({ children }: any) => (
-      <code style={{ 
-        backgroundColor: '#f1f5f9', 
-        color: '#334155',
-        padding: '0.2em 0.4em', 
-        borderRadius: '3px',
-        fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
-        fontSize: '0.875em'
-      }}>
-        {children}
-      </code>
-    ),
-    // 代码块
-    pre: ({ children }: any) => (
-      <pre style={{ 
-        backgroundColor: '#f8fafc', 
-        border: '1px solid #e2e8f0',
-        padding: '1em', 
-        borderRadius: '6px',
-        overflow: 'auto',
-        margin: '1em 0',
-        fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace'
-      }}>
-        {children}
-      </pre>
-    ),
-    // 引用
-    blockquote: ({ children }: any) => (
-      <blockquote style={{
-        borderLeft: '4px solid #3b82f6',
-        paddingLeft: '1em',
-        margin: '1em 0',
-        fontStyle: 'italic',
-        color: '#64748b'
-      }}>
-        {children}
-      </blockquote>
-    ),
-  };
+  const displayLength = plainText.length - remainingCharsForThisBlock;
+  const isTypingComplete = displayLength >= plainText.length;
 
   return (
     <div className="content-block">
       {isTypingComplete ? (
-        // 打字完成，显示渲染后的 markdown
-        <ReactMarkdown components={components}>
-          {block.content}
-        </ReactMarkdown>
+        // 打字完成，显示渲染后的 markdown HTML
+        <div 
+          style={{ lineHeight: '1.6' }}
+          dangerouslySetInnerHTML={{ 
+            __html: marked(block.content, {
+              breaks: true,
+              gfm: true
+            }) as string
+          }} 
+        />
       ) : (
-        // 正在打字，显示带动画的原始文本
+        // 正在打字，显示带动画的纯文本（无markdown字符）
         <pre style={{ 
           whiteSpace: 'pre-wrap', 
           fontFamily: 'inherit',
           margin: 0,
           lineHeight: '1.6'
         }}>
-          {Array.from(block.content).map((char, index) => {
+          {Array.from(plainText).map((char, index) => {
             if (index < displayLength) {
               return (
                 <span key={`${block.id}-${index}`} className="char-fade-in">

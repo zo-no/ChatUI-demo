@@ -15,7 +15,7 @@
 /* 字符淡入显现动画 - 简洁的透明度效果 */
 .char-fade-in {
   display: inline-block;
-  animation: charFadeIn 0.4s ease-out forwards;
+  animation: charFadeIn 0.2s ease-out forwards;
 }
 
 @keyframes charFadeIn {

@@ -29,7 +29,7 @@ export default function ChatUICore() {
   // 消息列表
   const { messages, appendMsg, updateMsg } = useMessages(initialMessages);
   
-  const { blocks, addChunk, clear, flush, isTyping, textQueue } = useStreamProcessor(50);
+  const { blocks, addChunk, clear, flush, isTyping, textQueue } = useStreamProcessor(20);
   const [currentStreamingMsgId, setCurrentStreamingMsgId] = useState<string | null>(null);
 
   // 获取滚动容器引用

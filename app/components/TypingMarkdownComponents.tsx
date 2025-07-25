@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import ReactMarkdown from 'react-markdown';
 
 // 文本块接口
 interface TextBlock {
@@ -160,7 +161,7 @@ export function useStreamProcessor(speed: number = 20) {
   };
 }
 
-// 单个文本块组件 - 显示部分打字内容，每个字符带有浮动显现动画
+// 单个文本块组件 - 支持markdown渲染和字符动画
 export function TextBlockComponent({ block, textQueue }: { 
   block: TextBlock;
   textQueue: TypingTask[];
@@ -168,27 +169,127 @@ export function TextBlockComponent({ block, textQueue }: {
   // 计算当前块应该显示的字符数
   const remainingCharsForThisBlock = textQueue.filter(task => task.blockId === block.id).length;
   const displayLength = block.content.length - remainingCharsForThisBlock;
+  const isTypingComplete = displayLength >= block.content.length;
+
+  // 自定义markdown组件，用于完成后的渲染
+  const components = {
+    // 段落
+    p: ({ children }: any) => (
+      <p style={{ margin: '0.5em 0', lineHeight: '1.6' }}>
+        {children}
+      </p>
+    ),
+    // 标题
+    h1: ({ children }: any) => (
+      <h1 style={{ fontSize: '1.8em', fontWeight: 'bold', margin: '1em 0 0.5em 0', color: '#333' }}>
+        {children}
+      </h1>
+    ),
+    h2: ({ children }: any) => (
+      <h2 style={{ fontSize: '1.5em', fontWeight: 'bold', margin: '1em 0 0.5em 0', color: '#444' }}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children }: any) => (
+      <h3 style={{ fontSize: '1.3em', fontWeight: 'bold', margin: '1em 0 0.5em 0', color: '#555' }}>
+        {children}
+      </h3>
+    ),
+    // 强调
+    strong: ({ children }: any) => (
+      <strong style={{ fontWeight: 'bold', color: '#2563eb' }}>
+        {children}
+      </strong>
+    ),
+    em: ({ children }: any) => (
+      <em style={{ fontStyle: 'italic', color: '#7c3aed' }}>
+        {children}
+      </em>
+    ),
+    // 列表
+    ul: ({ children }: any) => (
+      <ul style={{ paddingLeft: '1.5em', margin: '0.5em 0' }}>
+        {children}
+      </ul>
+    ),
+    ol: ({ children }: any) => (
+      <ol style={{ paddingLeft: '1.5em', margin: '0.5em 0' }}>
+        {children}
+      </ol>
+    ),
+    li: ({ children }: any) => (
+      <li style={{ margin: '0.25em 0' }}>
+        {children}
+      </li>
+    ),
+    // 代码
+    code: ({ children }: any) => (
+      <code style={{ 
+        backgroundColor: '#f1f5f9', 
+        color: '#334155',
+        padding: '0.2em 0.4em', 
+        borderRadius: '3px',
+        fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+        fontSize: '0.875em'
+      }}>
+        {children}
+      </code>
+    ),
+    // 代码块
+    pre: ({ children }: any) => (
+      <pre style={{ 
+        backgroundColor: '#f8fafc', 
+        border: '1px solid #e2e8f0',
+        padding: '1em', 
+        borderRadius: '6px',
+        overflow: 'auto',
+        margin: '1em 0',
+        fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace'
+      }}>
+        {children}
+      </pre>
+    ),
+    // 引用
+    blockquote: ({ children }: any) => (
+      <blockquote style={{
+        borderLeft: '4px solid #3b82f6',
+        paddingLeft: '1em',
+        margin: '1em 0',
+        fontStyle: 'italic',
+        color: '#64748b'
+      }}>
+        {children}
+      </blockquote>
+    ),
+  };
 
   return (
     <div className="content-block">
-      <pre style={{ 
-        whiteSpace: 'pre-wrap', 
-        fontFamily: 'inherit',
-        margin: 0,
-        lineHeight: '1.6'
-      }}>
-        {Array.from(block.content).map((char, index) => {
-          // 只显示已经"打字"出来的字符
-          if (index < displayLength) {
-            return (
-              <span key={`${block.id}-${index}`} className="char-fade-in">
-                {char}
-              </span>
-            );
-          }
-          return null;
-        })}
-      </pre>
+      {isTypingComplete ? (
+        // 打字完成，显示渲染后的 markdown
+        <ReactMarkdown components={components}>
+          {block.content}
+        </ReactMarkdown>
+      ) : (
+        // 正在打字，显示带动画的原始文本
+        <pre style={{ 
+          whiteSpace: 'pre-wrap', 
+          fontFamily: 'inherit',
+          margin: 0,
+          lineHeight: '1.6'
+        }}>
+          {Array.from(block.content).map((char, index) => {
+            if (index < displayLength) {
+              return (
+                <span key={`${block.id}-${index}`} className="char-fade-in">
+                  {char}
+                </span>
+              );
+            }
+            return null;
+          })}
+        </pre>
+      )}
     </div>
   );
 }

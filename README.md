@@ -45,7 +45,7 @@ pnpm dev
 - **框架**: Next.js 14
 - **UI组件**: @chatui/core
 - **样式**: Tailwind CSS + 自定义CSS
-- **Markdown**: react-markdown + marked
+- **Markdown**: react-markdown + remark-gfm
 - **语言**: TypeScript
 - **包管理**: npm
 

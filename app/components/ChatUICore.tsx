@@ -15,7 +15,6 @@ import { simulateStreamData } from "../data/mockResponses";
 import {
   useStreamProcessor,
   TextBlockComponent,
-  useTypingEffect,
 } from "./TypingMarkdownComponents";
 import "./streaming-animations.css";
 
@@ -27,36 +26,42 @@ function useDevLog() {
   const loggedItems = useRef(new Set<string>());
   const renderCount = useRef(0);
   const isStrictMode = useRef(false);
-  
+
   // 检测严格模式
   useEffect(() => {
     renderCount.current++;
     if (renderCount.current > 1) {
       isStrictMode.current = true;
-      console.warn('🔍 React Strict Mode detected - some effects may run twice');
+      console.warn(
+        "🔍 React Strict Mode detected - some effects may run twice"
+      );
     }
   }, []);
-  
-  return (label: string, data: any, options?: { force?: boolean; type?: 'log' | 'warn' | 'error' }) => {
-    if (process.env.NODE_ENV === 'development') {
-      const { force = false, type = 'log' } = options || {};
+
+  return (
+    label: string,
+    data: any,
+    options?: { force?: boolean; type?: "log" | "warn" | "error" }
+  ) => {
+    if (process.env.NODE_ENV === "development") {
+      const { force = false, type = "log" } = options || {};
       const key = JSON.stringify({ label, data });
-      
+
       if (force || !loggedItems.current.has(key)) {
-        const prefix = isStrictMode.current ? '🔄 [Strict Mode]' : '📝';
+        const prefix = isStrictMode.current ? "🔄 [Strict Mode]" : "📝";
         const message = `${prefix} ${label}`;
-        
+
         switch (type) {
-          case 'warn':
+          case "warn":
             console.warn(message, data);
             break;
-          case 'error':
+          case "error":
             console.error(message, data);
             break;
           default:
             console.log(message, data);
         }
-        
+
         if (!force) {
           loggedItems.current.add(key);
           // 清理旧的日志记录，避免内存泄漏
@@ -89,16 +94,17 @@ function useStrictModeMonitor(componentName: string) {
   // 监控副作用执行
   useEffect(() => {
     effectCount.current++;
-    
-    if (process.env.NODE_ENV === 'development') {
-      const isLikelyStrictMode = renderCount.current % 2 === 0 && renderCount.current > 1;
-      
+
+    if (process.env.NODE_ENV === "development") {
+      const isLikelyStrictMode =
+        renderCount.current % 2 === 0 && renderCount.current > 1;
+
       if (isLikelyStrictMode && effectCount.current % 2 === 0) {
         console.warn(`⚡ ${componentName} - Strict Mode detected:`, {
           renders: renderCount.current,
           effects: effectCount.current,
           lastRenderDelay: timeSinceLastRender,
-          totalTime: now - startTime.current
+          totalTime: now - startTime.current,
         });
       }
     }
@@ -107,41 +113,13 @@ function useStrictModeMonitor(componentName: string) {
   return {
     renderCount: renderCount.current,
     effectCount: effectCount.current,
-    timeSinceStart: now - startTime.current
+    timeSinceStart: now - startTime.current,
   };
 }
 
 const initialMessages: any[] = [];
 
-/**
- * 流式文本块组件，提供基础的打字机效果
- * @param {object} props - 组件属性
- * @param {string} props.content - 文本内容
- * @param {boolean} props.enableTyping - 是否启用打字效果
- * @returns {JSX.Element} 流式文本块组件
- */
-function StreamingTextBlock({
-  content,
-  enableTyping,
-}: {
-  content: string;
-  enableTyping: boolean;
-}) {
-  const { displayText } = useTypingEffect(content, 30, enableTyping);
 
-  return (
-    <pre
-      style={{
-        whiteSpace: "pre-wrap",
-        fontFamily: "inherit",
-        margin: 0,
-        lineHeight: "1.6",
-      }}
-    >
-      {displayText}
-    </pre>
-  );
-}
 
 /**
  * 聊天UI核心组件 - 基于react-markdown的流式渲染聊天界面
@@ -149,12 +127,12 @@ function StreamingTextBlock({
  */
 export default function ChatUICore() {
   // 性能监控
-  const monitor = useStrictModeMonitor('ChatUICore');
-  
+  const monitor = useStrictModeMonitor("ChatUICore");
+
   // 消息列表
   const { messages, appendMsg, updateMsg } = useMessages(initialMessages);
 
-  const { blocks, addChunk, clear, flush, isTyping } = useStreamProcessor(20);
+  const { blocks, addChunk, clear, flush } = useStreamProcessor(20);
 
   // 获取滚动容器引用
   const messagesRef = useRef<any>(null);
@@ -178,7 +156,7 @@ export default function ChatUICore() {
       // 模拟流式数据接收
       setTimeout(() => {
         // 添加流式AI消息
-        const streamingMsg = appendMsg({
+        appendMsg({
           type: "streaming",
           content: { text: "" },
           position: "left",
@@ -211,29 +189,10 @@ export default function ChatUICore() {
     );
   }
 
-  // 传统打字机效果（用于非流式消息）
-  function renderMarkdownForTyping(text: string) {
-    return (
-      <div className="typing-content">
-        <StreamingTextBlock content={text} enableTyping={isTyping} />
-      </div>
-    );
-  }
+
 
   function renderMessageContent(msg: any) {
     const { type, content } = msg;
-    
-    // 使用防重复的开发日志，包含性能信息
-    devLog('【msg】', {
-      type, 
-      content: typeof content === 'object' ? content : { text: content },
-      id: msg.id || 'no-id',
-      performanceInfo: {
-        renders: monitor.renderCount,
-        effects: monitor.effectCount,
-        uptime: monitor.timeSinceStart
-      }
-    });
 
     // 根据消息类型渲染不同内容
     if (type === "streaming") {
@@ -241,23 +200,7 @@ export default function ChatUICore() {
       return renderStreamingContent();
     }
 
-    if (type === "typing") {
-      // 传统打字气泡效果
-      return renderMarkdownForTyping(content.text);
-    }
-
-    // 普通文本消息
-    if (type === "text") {
-      return (
-        <div className="text-content">
-          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-            {content.text}
-          </pre>
-        </div>
-      );
-    }
-
-    // 默认渲染
+    // 普通文本消息和默认渲染
     return <Bubble content={content.text} />;
   }
 
